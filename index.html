@@ -1,0 +1,757 @@
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HR Analytics & Management Dashboard</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Font Awesome Icons CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Inter & Prompt -->
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Prompt', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: #f8fafc;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="text-slate-800 flex h-screen overflow-hidden">
+
+    <!-- Sidebar Navigation -->
+    <aside class="w-64 bg-slate-900 text-slate-300 flex flex-col justify-between hidden md:flex shrink-0">
+        <div>
+            <!-- App Logo & Title -->
+            <div class="p-5 flex items-center gap-3 border-b border-slate-800">
+                <div class="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-indigo-500/30">
+                    HR
+                </div>
+                <div>
+                    <h1 class="font-bold text-white text-base leading-tight">HR Insights Pro</h1>
+                    <p class="text-xs text-slate-400">Analytics & Management</p>
+                </div>
+            </div>
+
+            <!-- Navigation Links -->
+            <nav class="p-4 space-y-1 text-sm font-medium">
+                <a href="#" onclick="switchTab('overview')" id="nav-overview" class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-indigo-600 text-white shadow-sm transition">
+                    <i class="fa-solid fa-chart-pie w-5 text-center"></i>
+                    <span>ภาพรวมองค์กร (Overview)</span>
+                </a>
+                <a href="#" onclick="switchTab('employees')" id="nav-employees" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-400 hover:bg-slate-800 hover:text-white transition">
+                    <i class="fa-solid fa-users w-5 text-center"></i>
+                    <span>ข้อมูลพนักงาน (Employees)</span>
+                </a>
+                <a href="#" onclick="switchTab('recruitment')" id="nav-recruitment" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-400 hover:bg-slate-800 hover:text-white transition">
+                    <i class="fa-solid fa-bullseye w-5 text-center"></i>
+                    <span>ช่องทางสรรหา (Recruitment)</span>
+                </a>
+                <a href="#" onclick="switchTab('performance')" id="nav-performance" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-400 hover:bg-slate-800 hover:text-white transition">
+                    <i class="fa-solid fa-award w-5 text-center"></i>
+                    <span>ประเมินผลงาน (Performance)</span>
+                </a>
+            </nav>
+        </div>
+
+        <!-- User Profile & Data Info -->
+        <div class="p-4 border-t border-slate-800 text-xs text-slate-400 flex flex-col gap-2">
+            <div class="flex items-center justify-between">
+                <span><i class="fa-solid fa-database mr-1"></i> HR Dataset v2.0</span>
+                <span class="bg-emerald-500/20 text-emerald-400 text-[10px] px-2 py-0.5 rounded-full font-medium">Live</span>
+            </div>
+            <p>ระบบวิเคราะห์ข้อมูล HR แบบ Interactive</p>
+        </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 flex flex-col h-screen overflow-hidden">
+        
+        <!-- Top Navbar -->
+        <header class="h-16 bg-white border-b border-slate-200 px-6 flex items-center justify-between shrink-0">
+            <div class="flex items-center gap-3">
+                <button class="md:hidden text-slate-600 text-xl" id="mobileMenuBtn">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+                <h2 class="text-lg font-bold text-slate-800" id="pageTitle">ภาพรวมวิเคราะห์ข้อมูลพนักงาน (HR Overview)</h2>
+            </div>
+
+            <!-- Action Controls -->
+            <div class="flex items-center gap-3">
+                <button onclick="openImportModal()" class="px-3.5 py-1.5 text-xs font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition flex items-center gap-2">
+                    <i class="fa-solid fa-file-import"></i> นำเข้าข้อมูล CSV
+                </button>
+                <button onclick="exportDataCSV()" class="px-3.5 py-1.5 text-xs font-medium text-indigo-700 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition flex items-center gap-2">
+                    <i class="fa-solid fa-file-export"></i> ส่งออก CSV
+                </button>
+                <button onclick="openAddEmployeeModal()" class="px-3.5 py-1.5 text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition shadow-sm flex items-center gap-2">
+                    <i class="fa-solid fa-plus"></i> เพิ่มพนักงานใหม่
+                </button>
+            </div>
+        </header>
+
+        <!-- Dynamic Filter Bar -->
+        <div class="bg-white border-b border-slate-200 px-6 py-3 flex flex-wrap items-center gap-4 text-xs shrink-0">
+            <span class="font-semibold text-slate-600 flex items-center gap-1.5">
+                <i class="fa-solid fa-filter text-indigo-600"></i> ตัวกรอง:
+            </span>
+            
+            <select id="filterDept" onchange="applyFilters()" class="border border-slate-300 rounded-lg px-2.5 py-1.5 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-indigo-500 outline-none">
+                <option value="ALL">แผนกทั้งหมด (All Departments)</option>
+            </select>
+
+            <select id="filterStatus" onchange="applyFilters()" class="border border-slate-300 rounded-lg px-2.5 py-1.5 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-indigo-500 outline-none">
+                <option value="ALL">สถานะทั้งหมด (All Status)</option>
+                <option value="Active">Active (ทำงานอยู่)</option>
+                <option value="Voluntarily Terminated">Voluntarily Terminated (ลาออกเอง)</option>
+
+            </select>
+
+            <select id="filterPerf" onchange="applyFilters()" class="border border-slate-300 rounded-lg px-2.5 py-1.5 bg-slate-50 focus:bg-white focus:ring-2 focus:ring-indigo-500 outline-none">
+                <option value="ALL">ผลประเมินทั้งหมด (All Performance Score)</option>
+            </select>
+
+            <button onclick="resetFilters()" class="text-indigo-600 hover:text-indigo-800 font-medium ml-auto">
+                <i class="fa-solid fa-arrows-rotate mr-1"></i> ล้างตัวกรอง
+            </button>
+        </div>
+
+        <!-- Scrollable Dashboard Content Area -->
+        <div class="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar" id="mainScrollArea">
+
+            <!-- Tab 1: Overview Dashboard -->
+            <div id="tab-overview-content" class="space-y-6">
+                
+                <!-- KPI Key Metric Cards -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <!-- KPI 1 -->
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">พนักงานทั้งหมด</p>
+                            <h3 class="text-2xl font-bold text-slate-800 mt-1" id="kpiTotalEmp">0</h3>
+                            <p class="text-[11px] text-emerald-600 mt-1 flex items-center font-medium">
+                                <i class="fa-solid fa-user-check mr-1"></i> <span id="kpiActiveEmp">0 Active</span>
+                            </p>
+                        </div>
+                        <div class="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-xl">
+                            <i class="fa-solid fa-users"></i>
+                        </div>
+                    </div>
+
+                    <!-- KPI 2 -->
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">อัตราค่าจ้างเฉลี่ย/ชั่วโมง</p>
+                            <h3 class="text-2xl font-bold text-slate-800 mt-1" id="kpiAvgPay">$0.00</h3>
+                            <p class="text-[11px] text-slate-500 mt-1">
+                                Pay Rate Average
+                            </p>
+                        </div>
+                        <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl">
+                            <i class="fa-solid fa-dollar-sign"></i>
+                        </div>
+                    </div>
+
+                    <!-- KPI 3 -->
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">ความผูกพันองค์กร (Engagement)</p>
+                            <h3 class="text-2xl font-bold text-slate-800 mt-1" id="kpiAvgEng">0.0 / 5</h3>
+                            <p class="text-[11px] text-indigo-600 mt-1 font-medium">
+                                Engagement Score
+                            </p>
+                        </div>
+                        <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl">
+                            <i class="fa-solid fa-heart"></i>
+                        </div>
+                    </div>
+
+                    <!-- KPI 4 -->
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">อัตราการลาออก (Attrition)</p>
+                            <h3 class="text-2xl font-bold text-slate-800 mt-1" id="kpiAttritionRate">0%</h3>
+                            <p class="text-[11px] text-rose-500 mt-1 font-medium" id="kpiTerminatedCount">
+                                0 พนักงานลาออก
+                            </p>
+                        </div>
+                        <div class="w-12 h-12 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center text-xl">
+                            <i class="fa-solid fa-user-minus"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts Section Row 1 -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Chart: Headcount by Department -->
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm lg:col-span-2">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+                                <i class="fa-solid fa-sitemap text-indigo-600"></i> จำนวนพนักงานแยกตามแผนก (Headcount by Department)
+                            </h3>
+                        </div>
+                        <div class="h-64 relative">
+                            <canvas id="chartDeptHeadcount"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Chart: Performance Score Distribution -->
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+                                <i class="fa-solid fa-chart-pie text-indigo-600"></i> สัดส่วนผลการประเมินงาน
+                            </h3>
+                        </div>
+                        <div class="h-64 relative flex items-center justify-center">
+                            <canvas id="chartPerformancePie"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts Section Row 2 -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Chart: Pay Rate by Department -->
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+                                <i class="fa-solid fa-money-bill-wave text-indigo-600"></i> อัตราค่าจ้างเฉลี่ยรายชั่วโมงแยกตามแผนก ($/hr)
+                            </h3>
+                        </div>
+                        <div class="h-64 relative">
+                            <canvas id="chartDeptPayRate"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Chart: Recruitment Source Effectiveness -->
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+                                <i class="fa-solid fa-bullseye text-indigo-600"></i> ประสิทธิภาพช่องทางการสรรหาพนักงาน Top 5
+                            </h3>
+                        </div>
+                        <div class="h-64 relative">
+                            <canvas id="chartRecruitmentBar"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Tab 2: Employee Table Data -->
+            <div id="tab-employees-content" class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden hidden">
+                <div class="p-4 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3">
+                    <div class="relative flex-1 min-w-[240px]">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+                        <input type="text" id="employeeSearchInput" onkeyup="filterEmployeeTable()" placeholder="ค้นหาด้วยชื่อ-นามสกุล, ตำแหน่ง, รหัสพนักงาน..." class="w-full pl-9 pr-4 py-2 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-indigo-500 outline-none">
+                    </div>
+                    <div class="text-xs text-slate-500 font-medium">
+                        แสดง <span id="tableRecordCount" class="text-indigo-600 font-bold">0</span> รายการ
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto custom-scrollbar">
+                    <table class="w-full text-left text-xs text-slate-600">
+                        <thead class="bg-slate-50 text-slate-700 font-semibold uppercase tracking-wider border-b border-slate-200">
+                            <tr>
+                                <th class="p-3.5">รหัสพนักงาน</th>
+                                <th class="p-3.5">ชื่อ-นามสกุล</th>
+                                <th class="p-3.5">แผนก (Department)</th>
+                                <th class="p-3.5">ตำแหน่ง (Position)</th>
+                                <th class="p-3.5">ผู้จัดการ (Manager)</th>
+                                <th class="p-3.5">ค่าจ้าง ($/hr)</th>
+                                <th class="p-3.5">ผลประเมิน</th>
+                                <th class="p-3.5">สถานะ</th>
+                                <th class="p-3.5 text-center">จัดการ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="employeeTableBody" class="divide-y divide-slate-100">
+                            <!-- Rows loaded via JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Tab 3: Recruitment Channels -->
+            <div id="tab-recruitment-content" class="space-y-6 hidden">
+                <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                    <h3 class="text-base font-bold text-slate-800 mb-2">การวิเคราะห์ช่องทางการสรรหา (Recruitment Analysis)</h3>
+                    <p class="text-xs text-slate-500 mb-6">ตารางเปรียบเทียบคุณภาพของพนักงานที่ได้จากแต่ละช่องทางสรรหา</p>
+                    
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-xs text-left text-slate-600">
+                            <thead class="bg-slate-50 text-slate-700 uppercase font-semibold border-b">
+                                <tr>
+                                    <th class="p-3">ช่องทางสรรหา (Source)</th>
+                                    <th class="p-3">จำนวนที่รับเข้า</th>
+                                    <th class="p-3">คะแนนความผูกพันเฉลี่ย</th>
+                                    <th class="p-3">คะแนนความพึงพอใจเฉลี่ย</th>
+                                    <th class="p-3">จำนวนที่ลาออก</th>
+                                    <th class="p-3">อัตราการลาออก %</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recruitmentAnalysisBody" class="divide-y divide-slate-100">
+                                <!-- Generated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 4: Performance Matrix -->
+            <div id="tab-performance-content" class="space-y-6 hidden">
+                <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                    <h3 class="text-base font-bold text-slate-800 mb-2">สรุปผลการประเมินการทำงาน (Performance Summary)</h3>
+                    <p class="text-xs text-slate-500 mb-4">ข้อมูลเปรียบเทียบระหว่างระดับผลงาน คะแนนความพึงพอใจ และสถิติการขาดงาน</p>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-6" id="perfMatrixCards">
+                        <!-- Dynamic Perf Cards -->
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Employee Detail Modal Drawer -->
+    <div id="employeeModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl relative space-y-4">
+            <button onclick="closeModal('employeeModal')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 text-lg">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <div class="flex items-center gap-4 border-b border-slate-100 pb-4">
+                <div class="w-14 h-14 rounded-2xl bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-xl" id="modalAvatar">
+                    HR
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold text-slate-800" id="modalName">Name Surname</h3>
+                    <p class="text-xs text-indigo-600 font-medium" id="modalPosition">Position</p>
+                    <p class="text-[11px] text-slate-400" id="modalEmpID">ID: 0000</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3 text-xs">
+                <div class="bg-slate-50 p-3 rounded-lg">
+                    <span class="text-slate-400 block font-medium">แผนก (Department)</span>
+                    <span class="font-semibold text-slate-700" id="modalDept">-</span>
+                </div>
+                <div class="bg-slate-50 p-3 rounded-lg">
+                    <span class="text-slate-400 block font-medium">ผู้จัดการ (Manager)</span>
+                    <span class="font-semibold text-slate-700" id="modalManager">-</span>
+                </div>
+                <div class="bg-slate-50 p-3 rounded-lg">
+                    <span class="text-slate-400 block font-medium">ค่าจ้าง (Pay Rate)</span>
+                    <span class="font-semibold text-indigo-600" id="modalPayRate">-</span>
+                </div>
+                <div class="bg-slate-50 p-3 rounded-lg">
+                    <span class="text-slate-400 block font-medium">ผลประเมินงาน</span>
+                    <span class="font-semibold text-slate-700" id="modalPerfScore">-</span>
+                </div>
+                <div class="bg-slate-50 p-3 rounded-lg">
+                    <span class="text-slate-400 block font-medium">ความผูกพัน (Engagement)</span>
+                    <span class="font-semibold text-slate-700" id="modalEngagement">-</span>
+                </div>
+                <div class="bg-slate-50 p-3 rounded-lg">
+                    <span class="text-slate-400 block font-medium">ความพึงพอใจ (Satisfaction)</span>
+                    <span class="font-semibold text-slate-700" id="modalSatisfaction">-</span>
+                </div>
+                <div class="bg-slate-50 p-3 rounded-lg">
+                    <span class="text-slate-400 block font-medium">ช่องทางสรรหา</span>
+                    <span class="font-semibold text-slate-700" id="modalSource">-</span>
+                </div>
+                <div class="bg-slate-50 p-3 rounded-lg">
+                    <span class="text-slate-400 block font-medium">จำนวนครั้งที่ขาด/สาย</span>
+                    <span class="font-semibold text-slate-700" id="modalAbsences">-</span>
+                </div>
+            </div>
+
+            <div class="pt-2 flex justify-end">
+                <button onclick="closeModal('employeeModal')" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-lg text-xs transition">
+                    ปิดหน้าต่าง
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Default HR Dataset embedded matching standard HR Dataset structure
+        let hrDataset = [
+            { EmpID: "10001", Employee_Name: "Adinolfi, Wilson K", Department: "Production", Position: "Production Technician I", ManagerName: "Michael Albert", PayRate: 22.00, PerformanceScore: "Exceeds", EmploymentStatus: "Active", RecruitmentSource: "LinkedIn", EngagementSurvey: 4.60, EmpSatisfaction: 5, Absences: 1 },
+            { EmpID: "10002", Employee_Name: "Aitken, Sarah", Department: "Production", Position: "Production Technician I", ManagerName: "Michael Albert", PayRate: 21.50, PerformanceScore: "Fully Meets", EmploymentStatus: "Active", RecruitmentSource: "Indeed", EngagementSurvey: 4.20, EmpSatisfaction: 3, Absences: 4 },
+            { EmpID: "10003", Employee_Name: "Akinkuolie, Sarah", Department: "IT/IS", Position: "IT Support", ManagerName: "Jennifer Holmes", PayRate: 29.00, PerformanceScore: "Fully Meets", EmploymentStatus: "Voluntarily Terminated", RecruitmentSource: "LinkedIn", EngagementSurvey: 3.90, EmpSatisfaction: 3, Absences: 16 },
+            { EmpID: "10004", Employee_Name: "Barrows, Emily", Department: "Software Engineering", Position: "Software Engineer", ManagerName: "Alex Sweetwater", PayRate: 56.00, PerformanceScore: "Exceeds", EmploymentStatus: "Active", RecruitmentSource: "Google Search", EngagementSurvey: 5.00, EmpSatisfaction: 5, Absences: 2 },
+            { EmpID: "10005", Employee_Name: "Becker, Scott", Department: "Sales", Position: "Sales Manager", ManagerName: "Debra Houlihan", PayRate: 54.00, PerformanceScore: "Fully Meets", EmploymentStatus: "Active", RecruitmentSource: "Website", EngagementSurvey: 4.10, EmpSatisfaction: 4, Absences: 6 },
+            { EmpID: "10006", Employee_Name: "Bernstein, Clara", Department: "Admin Offices", Position: "Administrative Assistant", ManagerName: "Board of Directors", PayRate: 27.00, PerformanceScore: "Needs Improvement", EmploymentStatus: "Active", RecruitmentSource: "Indeed", EngagementSurvey: 2.80, EmpSatisfaction: 2, Absences: 12 },
+            { EmpID: "10007", Employee_Name: "Brown, Mia", Department: "Admin Offices", Position: "Accountant I", ManagerName: "Board of Directors", PayRate: 28.50, PerformanceScore: "Fully Meets", EmploymentStatus: "Active", RecruitmentSource: "Diversity Job Fair", EngagementSurvey: 4.50, EmpSatisfaction: 4, Absences: 3 },
+            { EmpID: "10008", Employee_Name: "Campbell, Duncan", Department: "Production", Position: "Production Technician II", ManagerName: "Webster Butler", PayRate: 26.00, PerformanceScore: "Exceeds", EmploymentStatus: "Active", RecruitmentSource: "Employee Referral", EngagementSurvey: 4.80, EmpSatisfaction: 5, Absences: 0 },
+            { EmpID: "10009", Employee_Name: "Carey, Michael", Department: "IT/IS", Position: "Sr. Network Engineer", ManagerName: "Jennifer Holmes", PayRate: 52.00, PerformanceScore: "Fully Meets", EmploymentStatus: "Active", RecruitmentSource: "LinkedIn", EngagementSurvey: 4.00, EmpSatisfaction: 4, Absences: 5 },
+            { EmpID: "10010", Employee_Name: "Champagne, Will", Department: "Sales", Position: "Area Sales Manager", ManagerName: "Debra Houlihan", PayRate: 55.00, PerformanceScore: "PIP", EmploymentStatus: "Voluntarily Terminated", RecruitmentSource: "CareerBuilder", EngagementSurvey: 2.10, EmpSatisfaction: 1, Absences: 19 }
+        ];
+
+        let filteredData = [...hrDataset];
+        let chartInstances = {};
+
+        // Initialization on Load
+        window.onload = function() {
+            populateFilterDropdowns();
+            renderDashboard();
+        };
+
+        function renderDashboard() {
+            calculateKPIs();
+            renderCharts();
+            renderEmployeeTable();
+            renderRecruitmentAnalysis();
+            renderPerformanceMatrix();
+        }
+
+        function calculateKPIs() {
+            const total = filteredData.length;
+            const active = filteredData.filter(d => d.EmploymentStatus === 'Active').length;
+            const terminated = filteredData.filter(d => d.EmploymentStatus !== 'Active').length;
+            
+            const avgPay = total > 0 ? (filteredData.reduce((acc, curr) => acc + Number(curr.PayRate || 0), 0) / total).toFixed(2) : "0.00";
+            const avgEng = total > 0 ? (filteredData.reduce((acc, curr) => acc + Number(curr.EngagementSurvey || 0), 0) / total).toFixed(2) : "0.00";
+            const attritionRate = total > 0 ? ((terminated / total) * 100).toFixed(1) : "0.0";
+
+            document.getElementById('kpiTotalEmp').innerText = total;
+            document.getElementById('kpiActiveEmp').innerText = `${active} Active`;
+            document.getElementById('kpiAvgPay').innerText = `$${avgPay}`;
+            document.getElementById('kpiAvgEng').innerText = `${avgEng} / 5`;
+            document.getElementById('kpiAttritionRate').innerText = `${attritionRate}%`;
+            document.getElementById('kpiTerminatedCount').innerText = `${terminated} ลาออก/พ้นสภาพ`;
+        }
+
+        function renderCharts() {
+            // Destroy existing charts to prevent memory leaks/glitches
+            Object.keys(chartInstances).forEach(key => {
+                if (chartInstances[key]) chartInstances[key].destroy();
+            });
+
+            // 1. Department Headcount Chart
+            const deptCounts = {};
+            filteredData.forEach(d => {
+                deptCounts[d.Department] = (deptCounts[d.Department] || 0) + 1;
+            });
+
+            const ctxDept = document.getElementById('chartDeptHeadcount').getContext('2d');
+            chartInstances.chartDeptHeadcount = new Chart(ctxDept, {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(deptCounts),
+                    datasets: [{
+                        label: 'จำนวนพนักงาน (คน)',
+                        data: Object.values(deptCounts),
+                        backgroundColor: '#6366f1',
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+                }
+            });
+
+            // 2. Performance Distribution Pie Chart
+            const perfCounts = {};
+            filteredData.forEach(d => {
+                perfCounts[d.PerformanceScore] = (perfCounts[d.PerformanceScore] || 0) + 1;
+            });
+
+            const ctxPerf = document.getElementById('chartPerformancePie').getContext('2d');
+            chartInstances.chartPerformancePie = new Chart(ctxPerf, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(perfCounts),
+                    datasets: [{
+                        data: Object.values(perfCounts),
+                        backgroundColor: ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'bottom' } }
+                }
+            });
+
+            // 3. Dept Pay Rate Average Chart
+            const deptPaySum = {};
+            const deptPayCount = {};
+            filteredData.forEach(d => {
+                deptPaySum[d.Department] = (deptPaySum[d.Department] || 0) + Number(d.PayRate || 0);
+                deptPayCount[d.Department] = (deptPayCount[d.Department] || 0) + 1;
+            });
+
+            const deptPayAvg = Object.keys(deptPaySum).map(dept => (deptPaySum[dept] / deptPayCount[dept]).toFixed(2));
+
+            const ctxPay = document.getElementById('chartDeptPayRate').getContext('2d');
+            chartInstances.chartDeptPayRate = new Chart(ctxPay, {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(deptPaySum),
+                    datasets: [{
+                        label: 'ค่าจ้างเฉลี่ย ($/hr)',
+                        data: deptPayAvg,
+                        backgroundColor: '#10b981',
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true } }
+                }
+            });
+
+            // 4. Recruitment Source Effectiveness
+            const recruitCounts = {};
+            filteredData.forEach(d => {
+                recruitCounts[d.RecruitmentSource] = (recruitCounts[d.RecruitmentSource] || 0) + 1;
+            });
+
+            const ctxRecruitment = document.getElementById('chartRecruitmentBar').getContext('2d');
+            chartInstances.chartRecruitmentBar = new Chart(ctxRecruitment, {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(recruitCounts),
+                    datasets: [{
+                        label: 'พนักงานที่ได้รับเลือก',
+                        data: Object.values(recruitCounts),
+                        backgroundColor: '#8b5cf6',
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+
+        function renderEmployeeTable() {
+            const tbody = document.getElementById('employeeTableBody');
+            tbody.innerHTML = '';
+
+            document.getElementById('tableRecordCount').innerText = filteredData.length;
+
+            filteredData.forEach(emp => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 transition border-b border-slate-100";
+                
+                let perfBadge = "bg-slate-100 text-slate-700";
+                if (emp.PerformanceScore === 'Exceeds') perfBadge = "bg-emerald-100 text-emerald-800";
+                if (emp.PerformanceScore === 'Fully Meets') perfBadge = "bg-blue-100 text-blue-800";
+                if (emp.PerformanceScore === 'Needs Improvement') perfBadge = "bg-amber-100 text-amber-800";
+                if (emp.PerformanceScore === 'PIP') perfBadge = "bg-rose-100 text-rose-800";
+
+                let statusBadge = emp.EmploymentStatus === 'Active' ? "bg-emerald-50 text-emerald-600 border border-emerald-200" : "bg-rose-50 text-rose-600 border border-rose-200";
+
+                tr.innerHTML = `
+                    <td class="p-3.5 font-mono text-slate-500">${emp.EmpID}</td>
+                    <td class="p-3.5 font-semibold text-slate-800">${emp.Employee_Name}</td>
+                    <td class="p-3.5">${emp.Department}</td>
+                    <td class="p-3.5">${emp.Position}</td>
+                    <td class="p-3.5">${emp.ManagerName || '-'}</td>
+                    <td class="p-3.5 font-medium text-slate-700">$${Number(emp.PayRate).toFixed(2)}</td>
+                    <td class="p-3.5"><span class="px-2 py-0.5 text-[10px] rounded-full font-medium ${perfBadge}">${emp.PerformanceScore}</span></td>
+                    <td class="p-3.5"><span class="px-2 py-0.5 text-[10px] rounded-full font-medium ${statusBadge}">${emp.EmploymentStatus}</span></td>
+                    <td class="p-3.5 text-center">
+                        <button onclick="viewEmployeeDetail('${emp.EmpID}')" class="text-indigo-600 hover:text-indigo-900 font-medium text-xs px-2 py-1 rounded bg-indigo-50 hover:bg-indigo-100 transition">
+                            <i class="fa-solid fa-eye"></i> ดูข้อมูล
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function populateFilterDropdowns() {
+            const depts = [...new Set(hrDataset.map(d => d.Department))];
+            const perfs = [...new Set(hrDataset.map(d => d.PerformanceScore))];
+
+            const deptSelect = document.getElementById('filterDept');
+            depts.forEach(dept => {
+                const opt = document.createElement('option');
+                opt.value = dept;
+                opt.innerText = dept;
+                deptSelect.appendChild(opt);
+            });
+
+            const perfSelect = document.getElementById('filterPerf');
+            perfs.forEach(perf => {
+                const opt = document.createElement('option');
+                opt.value = perf;
+                opt.innerText = perf;
+                perfSelect.appendChild(opt);
+            });
+        }
+
+        function applyFilters() {
+            const deptVal = document.getElementById('filterDept').value;
+            const statusVal = document.getElementById('filterStatus').value;
+            const perfVal = document.getElementById('filterPerf').value;
+
+            filteredData = hrDataset.filter(item => {
+                const matchDept = deptVal === 'ALL' || item.Department === deptVal;
+                const matchStatus = statusVal === 'ALL' || item.EmploymentStatus === statusVal;
+                const matchPerf = perfVal === 'ALL' || item.PerformanceScore === perfVal;
+                return matchDept && matchStatus && matchPerf;
+            });
+
+            renderDashboard();
+        }
+
+        function resetFilters() {
+            document.getElementById('filterDept').value = 'ALL';
+            document.getElementById('filterStatus').value = 'ALL';
+            document.getElementById('filterPerf').value = 'ALL';
+            filteredData = [...hrDataset];
+            renderDashboard();
+        }
+
+        function filterEmployeeTable() {
+            const query = document.getElementById('employeeSearchInput').value.toLowerCase();
+            const rows = document.querySelectorAll('#employeeTableBody tr');
+            
+            rows.forEach(row => {
+                const text = row.innerText.toLowerCase();
+                row.style.display = text.includes(query) ? '' : 'none';
+            });
+        }
+
+        function viewEmployeeDetail(empID) {
+            const emp = hrDataset.find(e => e.EmpID.toString() === empID.toString());
+            if (!emp) return;
+
+            document.getElementById('modalAvatar').innerText = emp.Employee_Name.substring(0, 2).toUpperCase();
+            document.getElementById('modalName').innerText = emp.Employee_Name;
+            document.getElementById('modalPosition').innerText = emp.Position;
+            document.getElementById('modalEmpID').innerText = `ID: ${emp.EmpID}`;
+            document.getElementById('modalDept').innerText = emp.Department;
+            document.getElementById('modalManager').innerText = emp.ManagerName || '-';
+            document.getElementById('modalPayRate').innerText = `$${Number(emp.PayRate).toFixed(2)} / ชม.`;
+            document.getElementById('modalPerfScore').innerText = emp.PerformanceScore;
+            document.getElementById('modalEngagement').innerText = `${emp.EngagementSurvey} / 5`;
+            document.getElementById('modalSatisfaction').innerText = `${emp.EmpSatisfaction} / 5`;
+            document.getElementById('modalSource').innerText = emp.RecruitmentSource;
+            document.getElementById('modalAbsences').innerText = `${emp.Absences} ครั้ง`;
+
+            document.getElementById('employeeModal').classList.remove('hidden');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.add('hidden');
+        }
+
+        function switchTab(tabName) {
+            const tabs = ['overview', 'employees', 'recruitment', 'performance'];
+            tabs.forEach(tab => {
+                document.getElementById(`tab-${tab}-content`).classList.add('hidden');
+                document.getElementById(`nav-${tab}`).className = "flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-400 hover:bg-slate-800 hover:text-white transition";
+            });
+
+            document.getElementById(`tab-${tabName}-content`).classList.remove('hidden');
+            document.getElementById(`nav-${tabName}`).className = "flex items-center gap-3 px-3 py-2.5 rounded-lg bg-indigo-600 text-white shadow-sm transition";
+
+            const titles = {
+                overview: 'ภาพรวมวิเคราะห์ข้อมูลพนักงาน (HR Overview)',
+                employees: 'รายชื่อและค้นหาข้อมูลพนักงาน (Employee Directory)',
+                recruitment: 'วิเคราะห์ประสิทธิภาพช่องทางการสรรหา (Recruitment Analysis)',
+                performance: 'สรุปผลการประเมินและการทำงาน (Performance Matrix)'
+            };
+            document.getElementById('pageTitle').innerText = titles[tabName];
+        }
+
+        function renderRecruitmentAnalysis() {
+            const tbody = document.getElementById('recruitmentAnalysisBody');
+            tbody.innerHTML = '';
+
+            const sources = [...new Set(hrDataset.map(d => d.RecruitmentSource))];
+            sources.forEach(src => {
+                const items = hrDataset.filter(d => d.RecruitmentSource === src);
+                const total = items.length;
+                const avgEng = (items.reduce((a, b) => a + Number(b.EngagementSurvey || 0), 0) / total).toFixed(2);
+                const avgSat = (items.reduce((a, b) => a + Number(b.EmpSatisfaction || 0), 0) / total).toFixed(2);
+                const termCount = items.filter(d => d.EmploymentStatus !== 'Active').length;
+                const termRate = ((termCount / total) * 100).toFixed(1);
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="p-3 font-semibold text-slate-800">${src}</td>
+                    <td class="p-3">${total} คน</td>
+                    <td class="p-3">${avgEng} / 5</td>
+                    <td class="p-3">${avgSat} / 5</td>
+                    <td class="p-3 text-rose-600 font-medium">${termCount} คน</td>
+                    <td class="p-3 font-bold">${termRate}%</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function renderPerformanceMatrix() {
+            const container = document.getElementById('perfMatrixCards');
+            container.innerHTML = '';
+
+            const perfs = [...new Set(hrDataset.map(d => d.PerformanceScore))];
+            perfs.forEach(p => {
+                const items = hrDataset.filter(d => d.PerformanceScore === p);
+                const avgAbs = (items.reduce((a, b) => a + Number(b.Absences || 0), 0) / items.length).toFixed(1);
+
+                const div = document.createElement('div');
+                div.className = "bg-slate-50 border border-slate-200 p-4 rounded-xl space-y-2";
+                div.innerHTML = `
+                    <h4 class="font-bold text-slate-800 text-sm">${p}</h4>
+                    <p class="text-2xl font-extrabold text-indigo-600">${items.length} <span class="text-xs text-slate-500 font-normal">พนักงาน</span></p>
+                    <p class="text-xs text-slate-500">ขาดงานเฉลี่ย: <span class="font-medium text-slate-700">${avgAbs} ครั้ง</span></p>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function exportDataCSV() {
+            let csvContent = "data:text/csv;charset=utf-8,";
+            csvContent += "EmpID,Employee_Name,Department,Position,ManagerName,PayRate,PerformanceScore,EmploymentStatus,RecruitmentSource\n";
+            
+            filteredData.forEach(row => {
+                csvContent += `${row.EmpID},"${row.Employee_Name}",${row.Department},${row.Position},"${row.ManagerName || ''}",${row.PayRate},${row.PerformanceScore},${row.EmploymentStatus},${row.RecruitmentSource}\n`;
+            });
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "HR_Analytics_Report.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function openImportModal() {
+            alert("สำหรับการใช้งานจริง สามารถนำไฟล์ CSV มาอัปเดตผ่านฟังก์ชัน FileReader ใน JavaScript ได้เลยครับ");
+        }
+
+        function openAddEmployeeModal() {
+            alert("สามารถเชื่อมต่อฟอร์มเพิ่มข้อมูลพนักงานเข้ากับ Array หรือ Database ได้ทันทีครับ");
+        }
+    </script>
+</body>
+</html>
