@@ -1,0 +1,70 @@
+<!-- Chart.js Script Integration -->
+    <script>
+        const categoryLabels = {{labels | tojson }};
+        const categoryData = {{ chart_data | tojson }};
+        const ctx = document.getElementById('categoryChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: categoryLabels,
+                datasets: [{
+                    data: categoryData,
+                    backgroundColor: [
+                        '#F59E0B', '#10B981', '#6366F1', '#EC4899', 
+                        '#3B82F6', '#8B5CF6', '#14B8A6', '#F97316'
+                    ],
+                    borderWidth: 2,
+                    borderColor: '#ffffff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            font: { family: 'Prompt, sans-serif', size: 10 },
+                            boxWidth: 12,
+                            padding: 10
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.label || '';
+                                if (label) { label += ': '; }
+                                if (context.parsed !== null) {
+                                    label += '฿' + context.parsed.toLocaleString('th-TH', {minimumFractionDigits: 2});
+                                }
+                                return label;
+                            }
+                        }
+                    }
+                },
+                cutout: '65%'
+            }
+        });
+
+        function filterTable() {
+            const input = document.getElementById('searchInput');
+            const filter = input.value.toLowerCase();
+            const table = document.getElementById('menuTable');
+            const tr = table.getElementsByTagName('tr');
+
+            for (let i = 1; i < tr.length; i++) {
+                let showRow = false;
+                const tdMenu = tr[i].getElementsByTagName('td')[1];
+                const tdCategory = tr[i].getElementsByTagName('td')[2];
+                
+                if (tdMenu || tdCategory) {
+                    const menuText = tdMenu.textContent || tdMenu.innerText;
+                    const catText = tdCategory.textContent || tdCategory.innerText;
+                    if (menuText.toLowerCase().indexOf(filter) > -1 || catText.toLowerCase().indexOf(filter) > -1) {
+                        showRow = true;
+                    }
+                }
+                tr[i].style.display = showRow ? "" : "none";
+            }
+        }
+    </script>
